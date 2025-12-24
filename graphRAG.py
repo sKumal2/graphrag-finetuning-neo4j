@@ -1,44 +1,28 @@
+"""
+GraphRAG - Fine-tuning with Multi-Agent Orchestration and Neo4j Integration
+This is the main entry point for the GraphRAG system.
+"""
+
 import os
-from langchain_chroma import Chroma
-from langchain_graph_retriever import GraphRetriever
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+import sys
+from pathlib import Path
 from dotenv import load_dotenv
 
+# Load environment variables
 load_dotenv()
 
-#embeddings
-embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+# Verify required environment variables
+required_vars = ["GOOGLE_API_KEY"]
+missing_vars = [var for var in required_vars if not os.getenv(var)]
 
-#populating the vector store 
-vectorstore = Chroma(
-    collection_name="movies",  # Your collection
-    embedding_function=embeddings,
-    # Direct Chroma Cloud params – pulls from .env if not set
-    chroma_cloud_api_key=os.getenv("CHROMA_API_KEY"),
-    tenant=os.getenv("CHROMA_TENANT"),
-    database="graphRAG",  # Your database
-)
+if missing_vars:
+    print(f"❌ Missing environment variables: {', '.join(missing_vars)}")
+    print(f"   Please add them to your .env file")
+    sys.exit(1)
 
-#graph traversal retriever
-movie_edges = [
-    ("release_year", "release_year"), 
-    ("movie_genre", "movie_genre"),
-]
-from langchain_graph_retriever import EagerStrategy
-traversal_retriever = GraphRetriever(
-    store=vectorstore,
-    edges=movie_edges,
-    strategy=EagerStrategy(),  # Using Strategy object instead of string
-)
-
-try:
-    results = traversal_retriever.invoke("what movies were released in 1994?")
-    
-    if results:
-        for doc in results:
-            print(f"{doc.id}: {doc.page_content}")
-    else:
-        print("No results found")
-        
-except Exception as e:
-    print(f"Error during retrieval: {e}")
+print("✓ GraphRAG system initialized")
+print("  - Google API configured")
+print("\nTo get started:")
+print("  1. Run: python finetune_setup.py")
+print("  2. Run: python example_multi_agent_finetune.py")
+print("  3. Read: README.md for full documentation")
